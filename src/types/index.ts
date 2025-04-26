@@ -16,21 +16,23 @@ export interface Client {
 
 export interface Lead {
   id: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string;
   company: string;
-  jobTitle: string;
+  job_title: string;
   source: string;
-  status: 'new' | 'contacted' | 'qualified' | 'unqualified';
+  status: 'new' | 'contacted' | 'qualified' | 'unqualified' | 'converted';
   notes: string;
-  created: string;
-  lastContact?: string;
+  created_at: string;
+  last_contact: string;
   industry?: string;
-  budget?: string;
+  budget_range?: string;
   timeline?: string;
   requirements?: string;
+  assigned_to?: string;
+  converted_client_id?: string;
 }
 
 export interface Intern {
@@ -76,12 +78,12 @@ export interface Service {
 
 export interface Task {
   id: string;
-  projectId?: string;
+  project_id?: string;
   title: string;
   description: string;
   status: 'todo' | 'in-progress' | 'completed';
-  dueDate?: string;
-  assignedTo?: string;
+  due_date?: string;
+  assigned_to?: string;
   priority: 'low' | 'medium' | 'high';
 }
 

@@ -19,6 +19,7 @@ import Button from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Employee } from '../types';
 import { supabase } from '../lib/supabase';
+import { formatPhoneNumber } from '../utils/formatters';
 
 const Employees: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,7 +85,7 @@ const Employees: React.FC = () => {
                         {selectedEmployee.first_name} {selectedEmployee.last_name}
                       </p>
                       <p className="text-sm text-gray-500">{selectedEmployee.email}</p>
-                      <p className="text-sm text-gray-500">{selectedEmployee.phone}</p>
+                      <p className="text-sm text-gray-500">{formatPhoneNumber(selectedEmployee.phone)}</p>
                     </div>
                   </div>
 
@@ -149,16 +150,11 @@ const Employees: React.FC = () => {
   };
 
   const EditEmployeeModal = () => {
-    const [formData, setFormData] = useState(selectedEmployee || {
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      department: '',
-      position: '',
-      status: 'active',
-      join_date: '',
-      skills: []
+    const [formData, setFormData] = useState({
+      ...selectedEmployee,
+      skills: Array.isArray(selectedEmployee?.skills) 
+        ? selectedEmployee.skills.join(', ')
+        : ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -167,18 +163,16 @@ const Employees: React.FC = () => {
       setIsSubmitting(true);
 
       try {
+        const skillsArray = formData.skills
+          .split(',')
+          .map(skill => skill.trim())
+          .filter(skill => skill.length > 0);
+
         const { error } = await supabase
           .from('employees')
           .update({
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            email: formData.email,
-            phone: formData.phone,
-            department: formData.department,
-            position: formData.position,
-            status: formData.status,
-            join_date: formData.join_date,
-            skills: formData.skills
+            ...formData,
+            skills: skillsArray
           })
           .eq('id', selectedEmployee?.id);
 
@@ -224,7 +218,6 @@ const Employees: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        required
                       />
                     </div>
                     <div>
@@ -234,7 +227,6 @@ const Employees: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        required
                       />
                     </div>
                   </div>
@@ -246,7 +238,6 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -255,9 +246,14 @@ const Employees: React.FC = () => {
                     <input
                       type="tel"
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
+                      value={formatPhoneNumber(formData.phone)}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 10) {
+                          setFormData({ ...formData, phone: value });
+                        }
+                      }}
+                      placeholder="(xxx) xxx-xxxx"
                     />
                   </div>
 
@@ -270,11 +266,11 @@ const Employees: React.FC = () => {
                       required
                     >
                       <option value="">Select Department</option>
+                      <option value="Project Management">Project Management</option>
                       <option value="Development">Development</option>
                       <option value="Sales">Sales</option>
-                      <option value="Research">Research</option>
                       <option value="Marketing">Marketing</option>
-                      <option value="Product">Product</option>
+                      <option value="Research">Research</option>
                     </select>
                   </div>
 
@@ -285,7 +281,6 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.position}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -295,7 +290,6 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      required
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
@@ -309,7 +303,6 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.join_date}
                       onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -320,10 +313,9 @@ const Employees: React.FC = () => {
                     <input
                       type="text"
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={Array.isArray(formData.skills) ? formData.skills.join(', ') : formData.skills}
-                      onChange={(e) => setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()) })}
+                      value={formData.skills}
+                      onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                       placeholder="e.g., Python, Machine Learning, Project Management"
-                      required
                     />
                   </div>
                   
@@ -374,11 +366,16 @@ const Employees: React.FC = () => {
       setIsSubmitting(true);
 
       try {
+        const skillsArray = formData.skills
+          .split(',')
+          .map(skill => skill.trim())
+          .filter(skill => skill.length > 0);
+
         const { error } = await supabase
           .from('employees')
           .insert([{
             ...formData,
-            skills: formData.skills.split(',').map(skill => skill.trim())
+            skills: skillsArray
           }]);
 
         if (error) throw error;
@@ -423,7 +420,6 @@ const Employees: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        required
                       />
                     </div>
                     <div>
@@ -433,7 +429,6 @@ const Employees: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        required
                       />
                     </div>
                   </div>
@@ -445,7 +440,6 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -454,9 +448,14 @@ const Employees: React.FC = () => {
                     <input
                       type="tel"
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
+                      value={formatPhoneNumber(formData.phone)}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        if (value.length <= 10) {
+                          setFormData({ ...formData, phone: value });
+                        }
+                      }}
+                      placeholder="(xxx) xxx-xxxx"
                     />
                   </div>
 
@@ -469,11 +468,11 @@ const Employees: React.FC = () => {
                       required
                     >
                       <option value="">Select Department</option>
+                      <option value="Project Management">Project Management</option>
                       <option value="Development">Development</option>
                       <option value="Sales">Sales</option>
-                      <option value="Research">Research</option>
                       <option value="Marketing">Marketing</option>
-                      <option value="Product">Product</option>
+                      <option value="Research">Research</option>
                     </select>
                   </div>
 
@@ -484,7 +483,6 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.position}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -495,7 +493,6 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.join_date}
                       onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -509,7 +506,6 @@ const Employees: React.FC = () => {
                       value={formData.skills}
                       onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                       placeholder="e.g., Python, Machine Learning, Project Management"
-                      required
                     />
                   </div>
                   
@@ -656,7 +652,7 @@ const Employees: React.FC = () => {
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <Phone className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span>{employee.phone}</span>
+              <span>{formatPhoneNumber(employee.phone)}</span>
             </div>
           </div>
 

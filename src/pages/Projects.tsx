@@ -155,7 +155,6 @@ const Projects: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -165,7 +164,6 @@ const Projects: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.client_id}
                       onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                      required
                     >
                       <option value="">Select Client</option>
                       {clients.map((client) => (
@@ -192,7 +190,6 @@ const Projects: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      required
                     >
                       <option value="planning">Planning</option>
                       <option value="in-progress">In Progress</option>
@@ -209,7 +206,6 @@ const Projects: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.start_date}
                         onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                        required
                       />
                     </div>
                     <div>
@@ -249,7 +245,6 @@ const Projects: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
                       min="0"
                       max="100"
-                      required
                     />
                   </div>
                   
@@ -453,7 +448,6 @@ const Projects: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
                     />
                   </div>
 
@@ -463,7 +457,6 @@ const Projects: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.client_id}
                       onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
-                      required
                     >
                       <option value="">Select Client</option>
                       {clients.map((client) => (
@@ -490,7 +483,6 @@ const Projects: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      required
                     >
                       <option value="planning">Planning</option>
                       <option value="in-progress">In Progress</option>
@@ -507,7 +499,6 @@ const Projects: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.start_date}
                         onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                        required
                       />
                     </div>
                     <div>
@@ -547,7 +538,6 @@ const Projects: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
                       min="0"
                       max="100"
-                      required
                     />
                   </div>
                   
