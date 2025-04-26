@@ -66,13 +66,17 @@ const Interns: React.FC = () => {
       setIsSubmitting(true);
 
       try {
+        const submissionData = {
+          ...formData,
+          start_date: formData.start_date || null,
+          end_date: formData.end_date || null,
+          skills: formData.skills.split(',').map(skill => skill.trim()),
+          status: 'pending'
+        };
+
         const { error } = await supabase
           .from('interns')
-          .insert([{
-            ...formData,
-            skills: formData.skills.split(',').map(skill => skill.trim()),
-            status: 'pending'
-          }]);
+          .insert([submissionData]);
 
         if (error) throw error;
         

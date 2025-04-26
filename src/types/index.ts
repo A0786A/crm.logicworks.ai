@@ -35,17 +35,22 @@ export interface Lead {
 
 export interface Intern {
   id: string;
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string;
   department: string;
+  mentor_id?: string;
   status: 'active' | 'completed' | 'pending';
-  startDate: string;
-  endDate?: string;
-  projects?: string[];
+  start_date: string;
+  end_date?: string;
+  projects: string[];
   skills: string[];
-  avatar?: string;
+  avatar_url?: string;
+  notes?: string;
+  performance_rating?: number;
+  feedback?: string;
+  current_project?: string;
 }
 
 export interface Project {
