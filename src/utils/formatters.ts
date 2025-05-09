@@ -1,13 +1,12 @@
 export const formatPhoneNumber = (phoneNumber: string): string => {
-  // Remove all non-digit characters
+  // Remove all non-numeric characters
   const cleaned = phoneNumber.replace(/\D/g, '');
   
-  // Format the number as (xxx) xxx-xxxx
-  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-  if (match) {
-    return `(${match[1]}) ${match[2]}-${match[3]}`;
+  // Check if the number is valid
+  if (cleaned.length !== 10) {
+    return phoneNumber; // Return original if invalid
   }
-  
-  // Return the original number if it doesn't match the pattern
-  return phoneNumber;
+
+  // Format as (xxx) xxx-xxxx
+  return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
 }; 

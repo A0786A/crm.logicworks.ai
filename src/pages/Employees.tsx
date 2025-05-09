@@ -17,43 +17,238 @@ import {
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Employee } from '../types';
+import { Agent } from '../types';
 import { supabase } from '../lib/supabase';
-import { formatPhoneNumber } from '../utils/formatters';
 
-const Employees: React.FC = () => {
+const Agents: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState<string | null>(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const [showNewEmployeeModal, setShowNewEmployeeModal] = useState(false);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [showNewAgentModal, setShowNewAgentModal] = useState(false);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
-    fetchEmployees();
+    fetchAgents();
   }, []);
 
-  const fetchEmployees = async () => {
+  const fetchAgents = async () => {
     try {
       const { data, error } = await supabase
-        .from('employees')
+        .from('agents')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setEmployees(data || []);
+      setAgents(data || []);
     } catch (error) {
-      console.error('Error fetching employees:', error);
+      console.error('Error fetching agents:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const ViewEmployeeModal = () => {
-    if (!selectedEmployee) return null;
+  const handleViewAgent = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setShowViewModal(true);
+  };
+
+  const handleEditAgent = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setShowEditModal(true);
+  };
+
+  const NewAgentModal = () => {
+    const [formData, setFormData] = useState({
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      department: '',
+      position: '',
+      status: 'active',
+      join_date: '',
+      skills: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSubmitting(true);
+
+      try {
+        const { error } = await supabase
+          .from('agents')
+          .insert([{
+            ...formData,
+            skills: formData.skills.split(',').map(skill => skill.trim())
+          }]);
+
+        if (error) throw error;
+        
+        await fetchAgents();
+        setShowNewAgentModal(false);
+      } catch (error) {
+        console.error('Error adding agent:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4">
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowNewAgentModal(false)} />
+          
+          <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="absolute right-0 top-0 pr-4 pt-4">
+              <button
+                type="button"
+                className="rounded-md bg-white text-gray-400 hover:text-gray-500"
+                onClick={() => setShowNewAgentModal(false)}
+              >
+                <span className="sr-only">Close</span>
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="sm:flex sm:items-start">
+              <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                <h3 className="text-lg font-semibold leading-6 text-gray-900">
+                  Add New Agent
+                </h3>
+                <form onSubmit={handleSubmit} className="mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">First Name</label>
+                      <input
+                        type="text"
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                        value={formData.first_name}
+                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                      <input
+                        type="text"
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                        value={formData.last_name}
+                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                      type="email"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <input
+                      type="tel"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">Department</label>
+                    <select
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      required
+                    >
+                      <option value="">Select Department</option>
+                      <option value="Development">Development</option>
+                      <option value="Sales">Sales</option>
+                      <option value="Research">Research</option>
+                      <option value="Marketing">Marketing</option>
+                      <option value="Product">Product</option>
+                    </select>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">Position</label>
+                    <input
+                      type="text"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      value={formData.position}
+                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">Join Date</label>
+                    <input
+                      type="date"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      value={formData.join_date}
+                      onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Skills (comma-separated)
+                    </label>
+                    <input
+                      type="text"
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                      value={formData.skills}
+                      onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                      placeholder="e.g., Python, Machine Learning, Project Management"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="mt-6 sm:flex sm:flex-row-reverse">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      className="w-full sm:ml-3 sm:w-auto"
+                      isLoading={isSubmitting}
+                    >
+                      Add Agent
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3 w-full sm:mt-0 sm:w-auto"
+                      onClick={() => setShowNewAgentModal(false)}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ViewAgentModal = () => {
+    if (!selectedAgent) return null;
 
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -75,44 +270,44 @@ const Employees: React.FC = () => {
             <div className="sm:flex sm:items-start">
               <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
                 <h3 className="text-lg font-semibold leading-6 text-gray-900">
-                  Employee Details
+                  Agent Details
                 </h3>
                 <div className="mt-4 space-y-4">
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Contact Information</h4>
                     <div className="mt-2">
                       <p className="text-sm font-medium text-gray-900">
-                        {selectedEmployee.first_name} {selectedEmployee.last_name}
+                        {selectedAgent.first_name} {selectedAgent.last_name}
                       </p>
-                      <p className="text-sm text-gray-500">{selectedEmployee.email}</p>
-                      <p className="text-sm text-gray-500">{formatPhoneNumber(selectedEmployee.phone)}</p>
+                      <p className="text-sm text-gray-500">{selectedAgent.email}</p>
+                      <p className="text-sm text-gray-500">{selectedAgent.phone}</p>
                     </div>
                   </div>
 
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Position</h4>
                     <div className="mt-2">
-                      <p className="text-sm text-gray-900">{selectedEmployee.position}</p>
-                      <p className="text-sm text-gray-500">{selectedEmployee.department}</p>
+                      <p className="text-sm text-gray-900">{selectedAgent.position}</p>
+                      <p className="text-sm text-gray-500">{selectedAgent.department}</p>
                     </div>
                   </div>
 
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Status</h4>
                     <div className="mt-2">
-                      {getStatusBadge(selectedEmployee.status)}
+                      {getStatusBadge(selectedAgent.status)}
                     </div>
                   </div>
 
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Join Date</h4>
-                    <p className="mt-1 text-sm text-gray-900">{formatDate(selectedEmployee.join_date)}</p>
+                    <p className="mt-1 text-sm text-gray-900">{formatDate(selectedAgent.join_date)}</p>
                   </div>
 
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Skills</h4>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedEmployee.skills.map((skill, index) => (
+                      {selectedAgent.skills.map((skill, index) => (
                         <span
                           key={index}
                           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
@@ -129,10 +324,10 @@ const Employees: React.FC = () => {
                     variant="outline"
                     onClick={() => {
                       setShowViewModal(false);
-                      handleEditEmployee(selectedEmployee);
+                      handleEditAgent(selectedAgent);
                     }}
                   >
-                    Edit Employee
+                    Edit Agent
                   </Button>
                   <Button
                     variant="primary"
@@ -149,12 +344,17 @@ const Employees: React.FC = () => {
     );
   };
 
-  const EditEmployeeModal = () => {
-    const [formData, setFormData] = useState({
-      ...selectedEmployee,
-      skills: Array.isArray(selectedEmployee?.skills) 
-        ? selectedEmployee.skills.join(', ')
-        : ''
+  const EditAgentModal = () => {
+    const [formData, setFormData] = useState(selectedAgent || {
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      department: '',
+      position: '',
+      status: 'active',
+      join_date: '',
+      skills: []
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -163,25 +363,27 @@ const Employees: React.FC = () => {
       setIsSubmitting(true);
 
       try {
-        const skillsArray = formData.skills
-          .split(',')
-          .map(skill => skill.trim())
-          .filter(skill => skill.length > 0);
-
         const { error } = await supabase
-          .from('employees')
+          .from('agents')
           .update({
-            ...formData,
-            skills: skillsArray
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            email: formData.email,
+            phone: formData.phone,
+            department: formData.department,
+            position: formData.position,
+            status: formData.status,
+            join_date: formData.join_date,
+            skills: formData.skills
           })
-          .eq('id', selectedEmployee?.id);
+          .eq('id', selectedAgent?.id);
 
         if (error) throw error;
         
-        await fetchEmployees();
+        await fetchAgents();
         setShowEditModal(false);
       } catch (error) {
-        console.error('Error updating employee:', error);
+        console.error('Error updating agent:', error);
       } finally {
         setIsSubmitting(false);
       }
@@ -207,7 +409,7 @@ const Employees: React.FC = () => {
             <div className="sm:flex sm:items-start">
               <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
                 <h3 className="text-lg font-semibold leading-6 text-gray-900">
-                  Edit Employee
+                  Edit Agent
                 </h3>
                 <form onSubmit={handleSubmit} className="mt-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -218,6 +420,7 @@ const Employees: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.first_name}
                         onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                        required
                       />
                     </div>
                     <div>
@@ -227,6 +430,7 @@ const Employees: React.FC = () => {
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                         value={formData.last_name}
                         onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                        required
                       />
                     </div>
                   </div>
@@ -238,6 +442,7 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
                     />
                   </div>
 
@@ -246,14 +451,9 @@ const Employees: React.FC = () => {
                     <input
                       type="tel"
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formatPhoneNumber(formData.phone)}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '');
-                        if (value.length <= 10) {
-                          setFormData({ ...formData, phone: value });
-                        }
-                      }}
-                      placeholder="(xxx) xxx-xxxx"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      required
                     />
                   </div>
 
@@ -266,11 +466,11 @@ const Employees: React.FC = () => {
                       required
                     >
                       <option value="">Select Department</option>
-                      <option value="Project Management">Project Management</option>
                       <option value="Development">Development</option>
                       <option value="Sales">Sales</option>
-                      <option value="Marketing">Marketing</option>
                       <option value="Research">Research</option>
+                      <option value="Marketing">Marketing</option>
+                      <option value="Product">Product</option>
                     </select>
                   </div>
 
@@ -281,6 +481,7 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.position}
                       onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                      required
                     />
                   </div>
 
@@ -289,7 +490,8 @@ const Employees: React.FC = () => {
                     <select
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as Agent['status'] })}
+                      required
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
@@ -303,6 +505,7 @@ const Employees: React.FC = () => {
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                       value={formData.join_date}
                       onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
+                      required
                     />
                   </div>
 
@@ -313,9 +516,10 @@ const Employees: React.FC = () => {
                     <input
                       type="text"
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.skills}
-                      onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+                      value={Array.isArray(formData.skills) ? formData.skills.join(', ') : formData.skills}
+                      onChange={(e) => setFormData({ ...formData, skills: e.target.value.split(',').map(s => s.trim()) })}
                       placeholder="e.g., Python, Machine Learning, Project Management"
+                      required
                     />
                   </div>
                   
@@ -347,208 +551,18 @@ const Employees: React.FC = () => {
     );
   };
 
-  const NewEmployeeModal = () => {
-    const [formData, setFormData] = useState({
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      department: '',
-      position: '',
-      status: 'active',
-      join_date: '',
-      skills: ''
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setIsSubmitting(true);
-
-      try {
-        const skillsArray = formData.skills
-          .split(',')
-          .map(skill => skill.trim())
-          .filter(skill => skill.length > 0);
-
-        const { error } = await supabase
-          .from('employees')
-          .insert([{
-            ...formData,
-            skills: skillsArray
-          }]);
-
-        if (error) throw error;
-        
-        await fetchEmployees();
-        setShowNewEmployeeModal(false);
-      } catch (error) {
-        console.error('Error adding employee:', error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-
-    return (
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4">
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowNewEmployeeModal(false)} />
-          
-          <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-            <div className="absolute right-0 top-0 pr-4 pt-4">
-              <button
-                type="button"
-                className="rounded-md bg-white text-gray-400 hover:text-gray-500"
-                onClick={() => setShowNewEmployeeModal(false)}
-              >
-                <span className="sr-only">Close</span>
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            
-            <div className="sm:flex sm:items-start">
-              <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                <h3 className="text-lg font-semibold leading-6 text-gray-900">
-                  Add New Employee
-                </h3>
-                <form onSubmit={handleSubmit} className="mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">First Name</label>
-                      <input
-                        type="text"
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                        value={formData.first_name}
-                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                      <input
-                        type="text"
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                        value={formData.last_name}
-                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Phone</label>
-                    <input
-                      type="tel"
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formatPhoneNumber(formData.phone)}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '');
-                        if (value.length <= 10) {
-                          setFormData({ ...formData, phone: value });
-                        }
-                      }}
-                      placeholder="(xxx) xxx-xxxx"
-                    />
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Department</label>
-                    <select
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.department}
-                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                      required
-                    >
-                      <option value="">Select Department</option>
-                      <option value="Project Management">Project Management</option>
-                      <option value="Development">Development</option>
-                      <option value="Sales">Sales</option>
-                      <option value="Marketing">Marketing</option>
-                      <option value="Research">Research</option>
-                    </select>
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Position</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.position}
-                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">Join Date</label>
-                    <input
-                      type="date"
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.join_date}
-                      onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Skills (comma-separated)
-                    </label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
-                      value={formData.skills}
-                      onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                      placeholder="e.g., Python, Machine Learning, Project Management"
-                    />
-                  </div>
-                  
-                  <div className="mt-6 sm:flex sm:flex-row-reverse">
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      className="w-full sm:ml-3 sm:w-auto"
-                      isLoading={isSubmitting}
-                    >
-                      Add Employee
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="mt-3 w-full sm:mt-0 sm:w-auto"
-                      onClick={() => setShowNewEmployeeModal(false)}
-                      disabled={isSubmitting}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const filteredEmployees = employees.filter((employee) => {
+  const filteredAgents = agents.filter((agent) => {
     const matchesSearch = 
-      `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      employee.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      employee.department.toLowerCase().includes(searchQuery.toLowerCase());
+      `${agent.first_name} ${agent.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agent.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agent.department.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesDepartment = departmentFilter === null || employee.department === departmentFilter;
+    const matchesDepartment = departmentFilter === null || agent.department === departmentFilter;
     
     return matchesSearch && matchesDepartment;
   });
 
-  const departments = Array.from(new Set(employees.map(emp => emp.department)));
+  const departments = Array.from(new Set(agents.map(agent => agent.department)));
   const filterOptions = [
     { value: null, label: 'All Departments' },
     ...departments.map(dept => ({ value: dept, label: dept }))
@@ -581,30 +595,20 @@ const Employees: React.FC = () => {
     }).format(new Date(dateString));
   };
 
-  const handleViewEmployee = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setShowViewModal(true);
-  };
-
-  const handleEditEmployee = (employee: Employee) => {
-    setSelectedEmployee(employee);
-    setShowEditModal(true);
-  };
-
-  const EmployeeCard: React.FC<{ employee: Employee }> = ({ employee }) => {
+  const AgentCard: React.FC<{ agent: Agent }> = ({ agent }) => {
     const handleDelete = async () => {
-      if (window.confirm('Are you sure you want to delete this employee?')) {
+      if (window.confirm('Are you sure you want to delete this agent?')) {
         try {
           const { error } = await supabase
-            .from('employees')
+            .from('agents')
             .delete()
-            .eq('id', employee.id);
+            .eq('id', agent.id);
 
           if (error) throw error;
           
-          await fetchEmployees();
+          await fetchAgents();
         } catch (error) {
-          console.error('Error deleting employee:', error);
+          console.error('Error deleting agent:', error);
         }
       }
     };
@@ -614,11 +618,11 @@ const Employees: React.FC = () => {
         <div className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center">
-              {employee.avatar_url ? (
+              {agent.avatar_url ? (
                 <img
                   className="h-12 w-12 rounded-full"
-                  src={employee.avatar_url}
-                  alt={`${employee.first_name} ${employee.last_name}`}
+                  src={agent.avatar_url}
+                  alt={`${agent.first_name} ${agent.last_name}`}
                 />
               ) : (
                 <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
@@ -627,45 +631,45 @@ const Employees: React.FC = () => {
               )}
               <div className="ml-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {employee.first_name} {employee.last_name}
+                  {agent.first_name} {agent.last_name}
                 </h3>
-                <p className="text-sm text-gray-500">{employee.position}</p>
+                <p className="text-sm text-gray-500">{agent.position}</p>
               </div>
             </div>
             <div className="flex items-center">
-              {getStatusBadge(employee.status)}
+              {getStatusBadge(agent.status)}
             </div>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div className="flex items-center text-sm text-gray-500">
               <Briefcase className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span>{employee.department}</span>
+              <span>{agent.department}</span>
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <Calendar className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span>Joined {formatDate(employee.join_date)}</span>
+              <span>Joined {formatDate(agent.join_date)}</span>
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <Mail className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span>{employee.email}</span>
+              <span>{agent.email}</span>
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <Phone className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span>{formatPhoneNumber(employee.phone)}</span>
+              <span>{agent.phone}</span>
             </div>
           </div>
 
           <div className="mt-4">
             <div className="flex items-center text-sm text-gray-500">
               <Award className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" />
-              <span>{employee.position}</span>
+              <span>{agent.position}</span>
             </div>
           </div>
 
           <div className="mt-4">
             <div className="flex flex-wrap gap-2">
-              {employee.skills.map((skill, index) => (
+              {agent.skills.map((skill, index) => (
                 <span
                   key={index}
                   className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
@@ -684,7 +688,7 @@ const Employees: React.FC = () => {
                 variant="ghost" 
                 size="sm" 
                 leftIcon={<FileEdit className="h-4 w-4" />}
-                onClick={() => handleEditEmployee(employee)}
+                onClick={() => handleEditAgent(agent)}
               >
                 Edit
               </Button>
@@ -702,7 +706,7 @@ const Employees: React.FC = () => {
               variant="outline" 
               size="sm" 
               rightIcon={<ArrowRight className="h-4 w-4" />}
-              onClick={() => handleViewEmployee(employee)}
+              onClick={() => handleViewAgent(agent)}
             >
               View Details
             </Button>
@@ -716,7 +720,7 @@ const Employees: React.FC = () => {
     <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
           <p className="mt-1 text-sm text-gray-500">
             Manage your team members and their roles
           </p>
@@ -725,9 +729,9 @@ const Employees: React.FC = () => {
           <Button
             variant="primary"
             leftIcon={<Plus className="h-4 w-4" />}
-            onClick={() => setShowNewEmployeeModal(true)}
+            onClick={() => setShowNewAgentModal(true)}
           >
-            Add Employee
+            Add Agent
           </Button>
         </div>
       </div>
@@ -741,7 +745,7 @@ const Employees: React.FC = () => {
             <input
               type="text"
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Search employees..."
+              placeholder="Search agents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -760,7 +764,7 @@ const Employees: React.FC = () => {
             </button>
             {showFilterMenu && (
               <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                <div className="py-1" role="menu" aria-orientation="vertical">
+                <div className="py-1" role="menu">
                   {filterOptions.map((option) => (
                     <button
                       key={option.label}
@@ -790,29 +794,29 @@ const Employees: React.FC = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
           </div>
         ) : (
-          filteredEmployees.map((employee) => (
-            <EmployeeCard key={employee.id} employee={employee} />
+          filteredAgents.map((agent) => (
+            <AgentCard key={agent.id} agent={agent} />
           ))
         )}
       </div>
 
-      {!isLoading && filteredEmployees.length === 0 && (
+      {!isLoading && filteredAgents.length === 0 && (
         <div className="mt-6 flex flex-col items-center justify-center text-center py-12">
           <Briefcase className="h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No employees found</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No agents found</h3>
           <p className="mt-1 text-sm text-gray-500">
             {searchQuery
-              ? `No employees matching "${searchQuery}" found. Try a different search term.`
-              : 'No employees match the current filters.'}
+              ? `No agents matching "${searchQuery}" found. Try a different search term.`
+              : 'No agents match the current filters.'}
           </p>
         </div>
       )}
 
-      {showNewEmployeeModal && <NewEmployeeModal />}
-      {showViewModal && <ViewEmployeeModal />}
-      {showEditModal && <EditEmployeeModal />}
+      {showNewAgentModal && <NewAgentModal />}
+      {showViewModal && <ViewAgentModal />}
+      {showEditModal && <EditAgentModal />}
     </div>
   );
 };
 
-export default Employees;
+export default Agents;
